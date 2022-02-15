@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html>
+<head><title>Maintenance Page</title>
+        <meta charset="utf-8" />
+        <style>
+				html { height:100%; }
+                body, tr, form {font-family: tahoma; font-size: 12px; color: #404040; text-align: center; margin: 0; padding: 0; height:100%; position:relative;}
+                pre {font-family: courier, serif, size: 10pt; margin: 0px 8px;}
+                input {font-size: 12px;}
+                .container { height: 1400px; position: relative; }
+				.outer {display: table; position:absolute; top:50%; left:50%; margin:0; -ms-transform:translate(-50%,-50%); transform:translate(-50%,-50%);}
+				.header {background:#eef; border-bottom: 1px solid #ddd; padding: 7px;}
+				.header2 {vertical-align:middle; box-sizing: content-box; width: 800px; padding: 10px; border: 3px solid gray;}
+                .caption {font-size: 20px; color: #d95722; text-align: center; width: 10em;}
+                .arrow {font-weight: bold; text-decoration: none; color: #3D3D3D; }
+                .arrow:hover {text-decoration: underline;}
+                .command {font-weight: bold; text-decoration: none; color: #AAAAAA; }
+                .command:hover {text-decoration: underline;}
+                .timetable {vertical-align:middle; border-width: 1px; border-style: outset; border-collapse: collapse; border-color: gray; margin: 0 auto;}
+                .timetable td {border-width: 1px; border-spacing: 1px; padding: 1px; border-style: inset; border-color: #CCCCCC;}
+                .head-row {vertical-align:middle; color: black; background-color: #eef;}
+                .today-row {vertical-align:middle; background-color: #F8F7F4; color: black}
+				.banner { vertical-align:middle; box-sizing: content-box; height: 100px; }
+				.userguide { vertical-align:middle; max-width:400px; width:400px; text-align:justify; margin: 0 auto; }
+				#map{ vertical-align:middle; width:820px; height: 300px; }
+        </style>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgkOzAIjiEf6SUsVC2d0RXIWInvkql9Is"></script>	
+<script>
+//Set up some of our variables.
+var map; //Will contain map object.
+var marker = false; ////Has the user plotted their location marker? 
+var myLatLng = { lat: 43.851267, lng: -79.015997 };
+if (navigator.geolocation) {
+	navigator.geolocation.getCurrentPosition(setMyLocation);
+}
+var currentDate2 = new Date();
+var timestamp = Math.floor((currentDate2.getTime())/1000000);
+
+
+function setCookie(cname, cvalue, exdays) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+  let expires = "expires="+d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires;
+}
+
+function getCookie(cname) {
+  let name = cname + "=";
+  let ca = document.cookie.split(';');
+  for(let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
+
+
+function setMyLocation(position) {
+	myLatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+	//console.log("Browser location set.");
+	currentDate2 = new Date();
+	timestamp = Math.floor((currentDate2.getTime())/1000) + currentDate2.getTimezoneOffset() * 60;
+	initMap();
+	markerLocation();
+}  
+        
+		
+//Function called to initialize / create the map.
+//This is called when the page has loaded.
+function initMap() {
+
+    //The center location of our map.
+    var centerOfMap = new google.maps.LatLng(43.851267, -79.015997);
+
+    //Map options.
+    var options = {
+      center: centerOfMap, //Set center.
+      zoom: 10 //The zoom value.
+    };
+
+    //Create the map object.
+    map = new google.maps.Map(document.getElementById('map'), options);
+
+    //Create the Initial marker.
+    marker = new google.maps.Marker({
+        position: myLatLng,
+        map: map,
+        draggable: true //make it draggable
+    });
+
+    //Listen for any clicks on the map.
+    google.maps.event.addListener(map, 'click', function(event) {                
+        //Get the location that the user clicked.
+        var clickedLocation = event.latLng;
+        //If the marker hasn't been added.
+        if(marker === false){
+            //Create the marker.
+            marker = new google.maps.Marker({
+                position: clickedLocation,
+                map: map,
+                draggable: true //make it draggable
+            });
+            //Listen for drag events!
+            google.maps.event.addListener(marker, 'dragend', function(event){
+                markerLocation();
+            });
+        } else{
+            //Marker has already been added, so just change its location.
+            marker.setPosition(clickedLocation);
+        }
+        //Get the marker's location.
+        markerLocation();
+    });
+	
+	//Listen for Marker Drag-End event.
+    google.maps.event.addListener(marker, 'dragend', function (event) {
+			markerLocation();
+    });
+
+	
+}
+        
+//This function will get the marker's current location and then add the lat/long
+//values to our textfields so that we can save the location.
+function markerLocation(){
+    //Get location.
+    var currentLocation = marker.getPosition();
+    //Add lat and lng values to a field that we can save.
+    document.getElementById('latitude').value = currentLocation.lat(); //latitude
+    document.getElementById('longitude').value = currentLocation.lng(); //longitude
+	var apicall = 'https://maps.googleapis.com/maps/api/timezone/json?location='+currentLocation.lat()+'%2C'+currentLocation.lng()+'&timestamp='+timestamp+'&key=AIzaSyDgkOzAIjiEf6SUsVC2d0RXIWInvkql9Is';
+	
+	var xhr = new XMLHttpRequest() // create new XMLHttpRequest2 object
+	xhr.open('GET', apicall) // open GET request
+	xhr.onload = function(){
+    if (xhr.status === 200){ // if Ajax request successful
+        var output = JSON.parse(xhr.responseText) // convert returned JSON string to JSON object
+		//console.log(output.status) // log API return status for debugging purposes
+        if (output.status == 'OK'){ // if API reports everything was returned successfully
+            var offsets = output.dstOffset * 1000 + output.rawOffset * 1000 // get DST and time zone offsets in milliseconds
+            var localdate = new Date(timestamp * 1000 + offsets) // Date object containing current time of Clicked Point (timestamp + dstOffset + rawOffset)
+            //console.log("Destination date= "+ localdate.toLocaleString()) // Display current Click-point date and time
+			
+			document.getElementById('timezone').value = (output.rawOffset/3600);
+			document.getElementById("dst").selectedIndex = (output.dstOffset === 0 ? "1" : "2");			
+			
+			update();
+        }
+    }
+    else {
+			console.log('Request failed.  Returned status of ' + xhr.status)
+		}
+	}
+	xhr.send() // send requet
+}
+        
+        
+//Load the map when the page has finished loading.
+google.maps.event.addDomListener(window, 'load', initMap);		
+</script>
+		
+</head>
+<body>
+
+<div class="container">
+<div class="outer">
+
+<div id="map"></div>
+
+<div class="banner">
+<h1>Web Site Under Maintenance</h1>
+<p>Try again at a later time......</p>
+</div>
+
+<div class="header2">
+<form class="form" action="javascript:update();">
+        Latitude: <input type="text" value="43.851267" id="latitude" size="2" onchange="update();" />&nbsp;
+        Longitude: <input type="text" value="-79.015997" id="longitude" size="2" onchange="update();" />&nbsp;
+        Time Zone: <input type="text" value="-5" id="timezone" size="2" onchange="update();" />&nbsp;
+        DST:
+        <select id="dst" size="1" style="font-size: 12px;" onchange="update()">
+                <option value="auto" selected="selected">Auto</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+    </select>&nbsp;<br/>
+	<hr/>
+        Method:
+        <select id="method" size="1" style="font-size: 12px;" onchange="update()">
+                <option value="MWL">Muslim World League (MWL)</option>
+                <option value="ISNA"  selected="selected">Islamic Society of North America (ISNA)</option>
+                <option value="Egypt">Egyptian General Authority of Survey</option>
+                <option value="Makkah">Umm al-Qura University, Makkah</option>
+                <option value="Karachi">University of Islamic Sciences, Karachi</option>
+                <option value="Jafari">Shia Ithna-Ashari (Jafari)</option>
+                <option value="Tehran">Institute of Geophysics, University of Tehran</option>
+    </select>
+        <br/>
+        Asr Juristic Method:
+        <select id="juristic" size="1" style="font-size: 12px;" onchange="update()">
+                <option value="Hanafi" selected="selected">Hanafi</option>
+                <option value="Standard">Shafi/Maliki/Hanbali/Jafari</option>
+    </select>&nbsp;
+        Midnight Juristic Method:
+        <select id="midnight" size="1" style="font-size: 12px;" onchange="update()">
+                <option value="Standard" selected="selected">Standard - The mean time from Sunset to Sunrise</option>
+                <option value="Jafari">Jafari - The mean time from Maghrib to Fajr </option>
+    </select>&nbsp;
+        <br/>
+        Higher Latitudes Methods:
+        <select id="higherlatitudes" size="1" style="font-size: 12px;" onchange="update()">
+                <option value="None" selected="selected">None</option>
+                <option value="NightMiddle">Middle of Night method</option>
+                <option value="OneSeventh">1/7th Method</option>
+                <option value="AngleBased">Angle Based (Recommended)</option>
+    </select>&nbsp;<br/>
+        Further Adjustment Parameters (Parse-able JSON) :
+                <input type="text" value="" id="moreadjustments" size="10" onchange="update();" />&nbsp;
+		<button type="button" onclick="saveAllCookies()">Save Cookie</button><button type="button" onclick="clearAllCookies()">Clear Cookie</button>
+</form>
+</div>
+<br/>
+<table align="center">
+<tr>
+        <td><a href="javascript:displayMonth(-1)" class="arrow">&lt;&lt;</a></td>
+        <td id="table-title" class="caption"></td>
+        <td><a href="javascript:displayMonth(+1)" class="arrow">&gt;&gt;</a></td>
+</tr>
+</table>
+
+<br/>
+<table id="timetable" class="timetable">
+        <tbody></tbody>
+</table>
+
+<div align="center" style="margin-top: 7px">
+        Source: <a href="http://praytimes.org/" class="command">PrayTimes.org</a> |
+        Time Format: <a id="time-format" href="javascript:switchFormat(1)" title="Change clock format" class="command"></a>
+</div>
+<br/>
+<div class="userguide">
+<h4>User Guide</h4>
+<ol>
+<li>If prompted allow the web-page to use your location.</li>
+<li>You can manually click on the map to pick your location. You can also zoom-in, zoom-out or pan on the map.</li>
+<li>You can adjust the parameters for the PrayTimes.js and click on “Save Cookie” button to save your custom settings (other than the location) on your device. The next time you reload the page or revisit, the saved settings will be automatically used. The cookies are saved for 365 days. To clear the cookies on this page click “Clear Cookie” button.</li>
+</li>
+</ol>
+</div>
+
+</div>
+</div>
+
+<script>
+
+//--------------------- Copyright Block ----------------------
+/*
+
+PrayTimes.js: Prayer Times Calculator (ver 2.3)
+Copyright (C) 2007-2011 PrayTimes.org
+
+Developer: Hamid Zarrabi-Zadeh
+License: GNU LGPL v3.0
+
+TERMS OF USE:
+        Permission is granted to use this code, with or
+        without modification, in any website or application
+        provided that credit is given to the original work
+        with a link back to PrayTimes.org.
+
+This program is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY.
+
+PLEASE DO NOT REMOVE THIS COPYRIGHT BLOCK.
+
+*/
+
+
+//--------------------- Help and Manual ----------------------
+/*
+
+User's Manual:
+http://praytimes.org/manual
+
+Calculation Formulas:
+http://praytimes.org/calculation
+
+
+
+//------------------------ User Interface -------------------------
+
+
+        getTimes (date, coordinates [, timeZone [, dst [, timeFormat]]])
+
+        setMethod (method)       // set calculation method
+        adjust (parameters)      // adjust calculation parameters
+        tune (offsets)           // tune times by given offsets
+
+        getMethod ()             // get calculation method
+        getSetting ()            // get current calculation parameters
+        getOffsets ()            // get current time offsets
+
+
+//------------------------- Sample Usage --------------------------
+
+
+        var PT = new PrayTimes('ISNA');
+        var times = PT.getTimes(new Date(), [43, -80], -5);
+        document.write('Sunrise = '+ times.sunrise)
+
+
+*/
+
+
+//----------------------- PrayTimes Class ------------------------
+
+
+function PrayTimes(method) {
+
+
+        //------------------------ Constants --------------------------
+        var
+
+        // Time Names
+        timeNames = {
+                imsak    : 'Imsak',
+                fajr     : 'Fajr',
+                sunrise  : 'Sunrise',
+                dhuhr    : 'Dhuhr',
+                asr      : 'Asr',
+                sunset   : 'Sunset',
+                maghrib  : 'Maghrib',
+                isha     : 'Isha',
+                midnight : 'Midnight'
+        },
+
+
+        // Calculation Methods
+        methods = {
+                MWL: {
+                        name: 'Muslim World League',
+                        params: { fajr: 18, isha: 17 } },
+                ISNA: {
+                        name: 'Islamic Society of North America (ISNA)',
+                        params: { fajr: 15, isha: 15 } },
+                Egypt: {
+                        name: 'Egyptian General Authority of Survey',
+                        params: { fajr: 19.5, isha: 17.5 } },
+                Makkah: {
+                        name: 'Umm Al-Qura University, Makkah',
+                        params: { fajr: 18.5, isha: '90 min' } },  // fajr was 19 degrees before 1430 hijri
+                Karachi: {
+                        name: 'University of Islamic Sciences, Karachi',
+                        params: { fajr: 18, isha: 18 } },
+                Tehran: {
+                        name: 'Institute of Geophysics, University of Tehran',
+                        params: { fajr: 17.7, isha: 14, maghrib: 4.5, midnight: 'Jafari' } },  // isha is not explicitly specified in this method
+                Jafari: {
+                        name: 'Shia Ithna-Ashari, Leva Institute, Qum',
+                        params: { fajr: 16, isha: 14, maghrib: 4, midnight: 'Jafari' } }
+        },
+
+
+        // Default Parameters in Calculation Methods
+        defaultParams = {
+                maghrib: '0 min', midnight: 'Standard'
+
+        },
+
+
+        //----------------------- Parameter Values ----------------------
+        /*
+
+        // Asr Juristic Methods
+        asrJuristics = [
+                'Standard',    // Shafi`i, Maliki, Ja`fari, Hanbali
+                'Hanafi'       // Hanafi
+        ],
+
+
+        // Midnight Mode
+        midnightMethods = [
+                'Standard',    // Mid Sunset to Sunrise
+                'Jafari'       // Mid Sunset to Fajr
+        ],
+
+
+        // Adjust Methods for Higher Latitudes
+        highLatMethods = [
+                'NightMiddle', // middle of night
+                'AngleBased',  // angle/60th of night
+                'OneSeventh',  // 1/7th of night
+                'None'         // No adjustment
+        ],
+
+
+        // Time Formats
+        timeFormats = [
+                '24h',         // 24-hour format
+                '12h',         // 12-hour format
+                '12hNS',       // 12-hour format with no suffix
+                'Float'        // floating point number
+        ],
+        */
+
+
+        //---------------------- Default Settings --------------------
+
+        calcMethod = 'MWL',
+
+        // do not change anything here; use adjust method instead
+        setting = {
+                imsak    : '10 min',
+                dhuhr    : '0 min',
+                asr      : 'Standard',
+                highLats : 'NightMiddle'
+        },
+
+        timeFormat = '24h',
+        timeSuffixes = ['am', 'pm'],
+        invalidTime =  '-----',
+
+        numIterations = 1,
+        offset = {},
+
+
+        //----------------------- Local Variables ---------------------
+
+        lat, lng, elv,       // coordinates
+        timeZone, jDate;     // time variables
+
+
+        //---------------------- Initialization -----------------------
+
+
+        // set methods defaults
+        var defParams = defaultParams;
+        for (var i in methods) {
+                var params = methods[i].params;
+                for (var j in defParams)
+                        if ((typeof(params[j]) == 'undefined'))
+                                params[j] = defParams[j];
+        };
+
+        // initialize settings
+        calcMethod = methods[method] ? method : calcMethod;
+        var params = methods[calcMethod].params;
+        for (var id in params)
+                setting[id] = params[id];
+
+        // init time offsets
+        for (var i in timeNames)
+                offset[i] = 0;
+
+
+
+        //----------------------- Public Functions ------------------------
+        return {
+
+
+        // set calculation method
+        setMethod: function(method) {
+                if (methods[method]) {
+                        this.adjust(methods[method].params);
+                        calcMethod = method;
+                }
+        },
+
+
+        // set calculating parameters
+        adjust: function(params) {
+                for (var id in params)
+                        setting[id] = params[id];
+        },
+
+
+        // set time offsets
+        tune: function(timeOffsets) {
+                for (var i in timeOffsets)
+                        offset[i] = timeOffsets[i];
+        },
+
+
+        // get current calculation method
+        getMethod: function() { return calcMethod; },
+
+        // get current setting
+        getSetting: function() { return setting; },
+
+        // get current time offsets
+        getOffsets: function() { return offset; },
+
+        // get default calc parametrs
+        getDefaults: function() { return methods; },
+
+
+        // return prayer times for a given date
+        getTimes: function(date, coords, timezone, dst, format) {
+                lat = 1* coords[0];
+                lng = 1* coords[1];
+                elv = coords[2] ? 1* coords[2] : 0;
+                timeFormat = format || timeFormat;
+                if (date.constructor === Date)
+                        date = [date.getFullYear(), date.getMonth()+ 1, date.getDate()];
+                if (typeof(timezone) == 'undefined' || timezone == 'auto')
+                        timezone = this.getTimeZone(date);
+                if (typeof(dst) == 'undefined' || dst == 'auto')
+                        dst = this.getDst(date);
+                timeZone = 1* timezone+ (1* dst ? 1 : 0);
+                jDate = this.julian(date[0], date[1], date[2])- lng/ (15* 24);
+
+                return this.computeTimes();
+        },
+
+
+        // convert float time to the given format (see timeFormats)
+        getFormattedTime: function(time, format, suffixes) {
+                if (isNaN(time))
+                        return invalidTime;
+                if (format == 'Float') return time;
+                suffixes = suffixes || timeSuffixes;
+
+                time = DMath.fixHour(time+ 0.5/ 60);  // add 0.5 minutes to round
+                var hours = Math.floor(time);
+                var minutes = Math.floor((time- hours)* 60);
+                var suffix = (format == '12h') ? suffixes[hours < 12 ? 0 : 1] : '';
+                var hour = (format == '24h') ? this.twoDigitsFormat(hours) : ((hours+ 12 -1)% 12+ 1);
+                return hour+ ':'+ this.twoDigitsFormat(minutes)+ (suffix ? ' '+ suffix : '');
+        },
+
+
+        //---------------------- Calculation Functions -----------------------
+
+
+        // compute mid-day time
+        midDay: function(time) {
+                var eqt = this.sunPosition(jDate+ time).equation;
+                var noon = DMath.fixHour(12- eqt);
+                return noon;
+        },
+
+
+        // compute the time at which sun reaches a specific angle below horizon
+        sunAngleTime: function(angle, time, direction) {
+                var decl = this.sunPosition(jDate+ time).declination;
+                var noon = this.midDay(time);
+                var t = 1/15* DMath.arccos((-DMath.sin(angle)- DMath.sin(decl)* DMath.sin(lat))/
+                                (DMath.cos(decl)* DMath.cos(lat)));
+                return noon+ (direction == 'ccw' ? -t : t);
+        },
+
+
+        // compute asr time
+        asrTime: function(factor, time) {
+                var decl = this.sunPosition(jDate+ time).declination;
+                var angle = -DMath.arccot(factor+ DMath.tan(Math.abs(lat- decl)));
+                return this.sunAngleTime(angle, time);
+        },
+
+
+        // compute declination angle of sun and equation of time
+        // Ref: http://aa.usno.navy.mil/faq/docs/SunApprox.php
+        sunPosition: function(jd) {
+                var D = jd - 2451545.0;
+                var g = DMath.fixAngle(357.529 + 0.98560028* D);
+                var q = DMath.fixAngle(280.459 + 0.98564736* D);
+                var L = DMath.fixAngle(q + 1.915* DMath.sin(g) + 0.020* DMath.sin(2*g));
+
+                var R = 1.00014 - 0.01671* DMath.cos(g) - 0.00014* DMath.cos(2*g);
+                var e = 23.439 - 0.00000036* D;
+
+                var RA = DMath.arctan2(DMath.cos(e)* DMath.sin(L), DMath.cos(L))/ 15;
+                var eqt = q/15 - DMath.fixHour(RA);
+                var decl = DMath.arcsin(DMath.sin(e)* DMath.sin(L));
+
+                return {declination: decl, equation: eqt};
+        },
+
+
+        // convert Gregorian date to Julian day
+        // Ref: Astronomical Algorithms by Jean Meeus
+        julian: function(year, month, day) {
+                if (month <= 2) {
+                        year -= 1;
+                        month += 12;
+                };
+                var A = Math.floor(year/ 100);
+                var B = 2- A+ Math.floor(A/ 4);
+
+                var JD = Math.floor(365.25* (year+ 4716))+ Math.floor(30.6001* (month+ 1))+ day+ B- 1524.5;
+                return JD;
+        },
+
+
+        //---------------------- Compute Prayer Times -----------------------
+
+
+        // compute prayer times at given julian date
+        computePrayerTimes: function(times) {
+                times = this.dayPortion(times);
+                var params  = setting;
+
+                var imsak   = this.sunAngleTime(this.eval(params.imsak), times.imsak, 'ccw');
+                var fajr    = this.sunAngleTime(this.eval(params.fajr), times.fajr, 'ccw');
+                var sunrise = this.sunAngleTime(this.riseSetAngle(), times.sunrise, 'ccw');
+                var dhuhr   = this.midDay(times.dhuhr);
+                var asr     = this.asrTime(this.asrFactor(params.asr), times.asr);
+                var sunset  = this.sunAngleTime(this.riseSetAngle(), times.sunset);;
+                var maghrib = this.sunAngleTime(this.eval(params.maghrib), times.maghrib);
+                var isha    = this.sunAngleTime(this.eval(params.isha), times.isha);
+
+                return {
+                        imsak: imsak, fajr: fajr, sunrise: sunrise, dhuhr: dhuhr,
+                        asr: asr, sunset: sunset, maghrib: maghrib, isha: isha
+                };
+        },
+
+
+        // compute prayer times
+        computeTimes: function() {
+                // default times
+                var times = {
+                        imsak: 5, fajr: 5, sunrise: 6, dhuhr: 12,
+                        asr: 13, sunset: 18, maghrib: 18, isha: 18
+                };
+
+                // main iterations
+                for (var i=1 ; i<=numIterations ; i++)
+                        times = this.computePrayerTimes(times);
+
+                times = this.adjustTimes(times);
+
+                // add midnight time
+                times.midnight = (setting.midnight == 'Jafari') ?
+                                times.sunset+ this.timeDiff(times.sunset, times.fajr)/ 2 :
+                                times.sunset+ this.timeDiff(times.sunset, times.sunrise)/ 2;
+
+                times = this.tuneTimes(times);
+                return this.modifyFormats(times);
+        },
+
+
+        // adjust times
+        adjustTimes: function(times) {
+                var params = setting;
+                for (var i in times)
+                        times[i] += timeZone- lng/ 15;
+
+                if (params.highLats != 'None')
+                        times = this.adjustHighLats(times);
+
+                if (this.isMin(params.imsak))
+                        times.imsak = times.fajr- this.eval(params.imsak)/ 60;
+                if (this.isMin(params.maghrib))
+                        times.maghrib = times.sunset+ this.eval(params.maghrib)/ 60;
+                if (this.isMin(params.isha))
+                        times.isha = times.maghrib+ this.eval(params.isha)/ 60;
+                times.dhuhr += this.eval(params.dhuhr)/ 60;
+
+                return times;
+        },
+
+
+        // get asr shadow factor
+        asrFactor: function(asrParam) {
+                var factor = {Standard: 1, Hanafi: 2}[asrParam];
+                return factor || this.eval(asrParam);
+        },
+
+
+        // return sun angle for sunset/sunrise
+        riseSetAngle: function() {
+                //var earthRad = 6371009; // in meters
+                //var angle = DMath.arccos(earthRad/(earthRad+ elv));
+                var angle = 0.0347* Math.sqrt(elv); // an approximation
+                return 0.833+ angle;
+        },
+
+
+        // apply offsets to the times
+        tuneTimes: function(times) {
+                for (var i in times)
+                        times[i] += offset[i]/ 60;
+                return times;
+        },
+
+
+        // convert times to given time format
+        modifyFormats: function(times) {
+                for (var i in times)
+                        times[i] = this.getFormattedTime(times[i], timeFormat);
+                return times;
+        },
+
+
+        // adjust times for locations in higher latitudes
+        adjustHighLats: function(times) {
+                var params = setting;
+                var nightTime = this.timeDiff(times.sunset, times.sunrise);
+
+                times.imsak = this.adjustHLTime(times.imsak, times.sunrise, this.eval(params.imsak), nightTime, 'ccw');
+                times.fajr  = this.adjustHLTime(times.fajr, times.sunrise, this.eval(params.fajr), nightTime, 'ccw');
+                times.isha  = this.adjustHLTime(times.isha, times.sunset, this.eval(params.isha), nightTime);
+                times.maghrib = this.adjustHLTime(times.maghrib, times.sunset, this.eval(params.maghrib), nightTime);
+
+                return times;
+        },
+
+
+        // adjust a time for higher latitudes
+        adjustHLTime: function(time, base, angle, night, direction) {
+                var portion = this.nightPortion(angle, night);
+                var timeDiff = (direction == 'ccw') ?
+                        this.timeDiff(time, base):
+                        this.timeDiff(base, time);
+                if (isNaN(time) || timeDiff > portion)
+                        time = base+ (direction == 'ccw' ? -portion : portion);
+                return time;
+        },
+
+
+        // the night portion used for adjusting times in higher latitudes
+        nightPortion: function(angle, night) {
+                var method = setting.highLats;
+                var portion = 1/2 // MidNight
+                if (method == 'AngleBased')
+                        portion = 1/60* angle;
+                if (method == 'OneSeventh')
+                        portion = 1/7;
+                return portion* night;
+        },
+
+
+        // convert hours to day portions
+        dayPortion: function(times) {
+                for (var i in times)
+                        times[i] /= 24;
+                return times;
+        },
+
+
+        //---------------------- Time Zone Functions -----------------------
+
+
+        // get local time zone
+        getTimeZone: function(date) {
+                var year = date[0];
+                var t1 = this.gmtOffset([year, 0, 1]);
+                var t2 = this.gmtOffset([year, 6, 1]);
+                return Math.min(t1, t2);
+        },
+
+
+        // get daylight saving for a given date
+        getDst: function(date) {
+                return 1* (this.gmtOffset(date) != this.getTimeZone(date));
+        },
+
+
+        // GMT offset for a given date
+        gmtOffset: function(date) {
+                var localDate = new Date(date[0], date[1]- 1, date[2], 12, 0, 0, 0);
+                var GMTString = localDate.toGMTString();
+                var GMTDate = new Date(GMTString.substring(0, GMTString.lastIndexOf(' ')- 1));
+                var hoursDiff = (localDate- GMTDate) / (1000* 60* 60);
+                return hoursDiff;
+        },
+
+
+        //---------------------- Misc Functions -----------------------
+
+        // convert given string into a number
+        eval: function(str) {
+                return 1* (str+ '').split(/[^0-9.+-]/)[0];
+        },
+
+
+        // detect if input contains 'min'
+        isMin: function(arg) {
+                return (arg+ '').indexOf('min') != -1;
+        },
+
+
+        // compute the difference between two times
+        timeDiff: function(time1, time2) {
+                return DMath.fixHour(time2- time1);
+        },
+
+
+        // add a leading 0 if necessary
+        twoDigitsFormat: function(num) {
+                return (num <10) ? '0'+ num : num;
+        }
+
+}}
+
+
+
+//---------------------- Degree-Based Math Class -----------------------
+
+
+var DMath = {
+
+        dtr: function(d) { return (d * Math.PI) / 180.0; },
+        rtd: function(r) { return (r * 180.0) / Math.PI; },
+
+        sin: function(d) { return Math.sin(this.dtr(d)); },
+        cos: function(d) { return Math.cos(this.dtr(d)); },
+        tan: function(d) { return Math.tan(this.dtr(d)); },
+
+        arcsin: function(d) { return this.rtd(Math.asin(d)); },
+        arccos: function(d) { return this.rtd(Math.acos(d)); },
+        arctan: function(d) { return this.rtd(Math.atan(d)); },
+
+        arccot: function(x) { return this.rtd(Math.atan(1/x)); },
+        arctan2: function(y, x) { return this.rtd(Math.atan2(y, x)); },
+
+        fixAngle: function(a) { return this.fix(a, 360); },
+        fixHour:  function(a) { return this.fix(a, 24 ); },
+
+        fix: function(a, b) {
+                a = a- b* (Math.floor(a/ b));
+                return (a < 0) ? a+ b : a;
+        }
+}
+
+
+//---------------------- Init Object -----------------------
+
+
+var prayTimes = new PrayTimes();
+
+//----- Custom Code Follows
+
+        var currentDate = new Date();
+        var timeFormat = 1;
+        switchFormat(0);
+
+        // display monthly timetable
+        function displayMonth(offset) {
+                var lat = $('latitude').value;
+                var lng = $('longitude').value;
+                var timeZone = $('timezone').value;
+                var dst = $('dst').value;
+                var method = $('method').value;
+
+                var vjuristic = $('juristic').value;
+                var vmidnight = $('midnight').value;
+                var higherlatitudes = $('higherlatitudes').value;
+                var moreadjustments = $('moreadjustments').value;
+
+                prayTimes.setMethod(method);
+                prayTimes.adjust({asr: vjuristic, highLats: higherlatitudes, midnight: vmidnight});
+                if(!(!moreadjustments||moreadjustments.length===0)) {
+                        console.log(moreadjustments);
+                        var myJson = JSON.parse(moreadjustments)
+                        prayTimes.adjust(myJson);
+                }
+                currentDate.setMonth(currentDate.getMonth()+ 1* offset);
+                var month = currentDate.getMonth();
+                var year = currentDate.getFullYear();
+                var title = monthFullName(month)+ ' '+ year;
+                $('table-title').innerHTML = title;
+                makeTable(year, month, lat, lng, timeZone, dst);
+        }
+
+        // make monthly timetable
+        function makeTable(year, month, lat, lng, timeZone, dst) {
+                var items = {day: 'Day', fajr: 'Fajr', sunrise: 'Sunrise',
+                                        dhuhr: 'Dhuhr', asr: 'Asr', // sunset: 'Sunset',
+                                        maghrib: 'Maghrib', isha: 'Isha'};
+
+                var tbody = document.createElement('tbody');
+                tbody.appendChild(makeTableRow(items, items, 'head-row'));
+
+                var date = new Date(year, month, 1);
+                var endDate = new Date(year, month+ 1, 1);
+                var format = timeFormat ? '12hNS' : '24h';
+
+                while (date < endDate) {
+                        var times = prayTimes.getTimes(date, [lat, lng], timeZone, dst, format);
+                        times.day = date.getDate();
+                        var today = new Date();
+                        var isToday = (date.getMonth() == today.getMonth()) && (date.getDate() == today.getDate());
+                        var klass = isToday ? 'today-row' : '';
+                        tbody.appendChild(makeTableRow(times, items, klass));
+                        date.setDate(date.getDate()+ 1);  // next day
+                }
+                removeAllChild($('timetable'));
+                $('timetable').appendChild(tbody);
+        }
+
+        // make a table row
+        function makeTableRow(data, items, klass) {
+                var row = document.createElement('tr');
+                for (var i in items) {
+                        var cell = document.createElement('td');
+                        cell.innerHTML = data[i];
+                        cell.style.width = i=='day' ? '2.5em' : '3.7em';
+                        row.appendChild(cell);
+                }
+                row.className = klass;
+                return row;
+        }
+
+        // remove all children of a node
+        function removeAllChild(node) {
+                if (node == undefined || node == null)
+                        return;
+
+                while (node.firstChild)
+                        node.removeChild(node.firstChild);
+        }
+
+        // switch time format
+        function switchFormat(offset) {
+                var formats = ['24-hour', '12-hour'];
+                timeFormat = (timeFormat+ offset)% 2;
+                $('time-format').innerHTML = formats[timeFormat];
+                update();
+        }
+
+        // update table
+        function update() {
+                displayMonth(0);
+        }
+
+        // return month full name
+        function monthFullName(month) {
+                var monthName = new Array('January', 'February', 'March', 'April', 'May', 'June',
+                                                'July', 'August', 'September', 'October', 'November', 'December');
+                return monthName[month];
+        }
+
+        function $(id) {
+                return document.getElementById(id);
+        }
+
+
+
+function loadAllCookies() {
+	//let decodedCookie = decodeURIComponent(document.cookie);
+	//console.log("Cookie = "+decodedCookie);
+	let method = getCookie('method');
+	if (method)
+		document.getElementById('method').value = method;
+	let juristic = getCookie('juristic');
+	if (juristic)
+		document.getElementById('juristic').value = juristic;
+	let midnight = getCookie('midnight');
+	if (midnight)
+		document.getElementById('midnight').value = midnight;
+	let higherlatitudes = getCookie('higherlatitudes');
+	if (higherlatitudes)
+		document.getElementById('higherlatitudes').value = higherlatitudes;
+	let moreadjustments = getCookie('moreadjustments');
+	if (moreadjustments)
+		document.getElementById('moreadjustments').value = moreadjustments;
+	update();
+	//console.log("Loading all cookies finished.");
+}
+
+function saveAllCookies() {
+	let method = document.getElementById('method').value;
+	//console.log("method = "+method);
+	setCookie('method',method,365);
+
+	let juristic = document.getElementById('juristic').value;
+	//console.log("juristic = "+juristic);
+	setCookie('juristic',juristic,365);
+
+	let midnight = document.getElementById('midnight').value;
+	//console.log("midnight = "+midnight);
+	setCookie('midnight',midnight,365);
+
+	let higherlatitudes = document.getElementById('higherlatitudes').value;
+	//console.log("higherlatitudes = "+higherlatitudes);
+	setCookie('higherlatitudes',higherlatitudes,365);
+
+	let moreadjustments = document.getElementById('moreadjustments').value;
+	//console.log("moreadjustments = "+moreadjustments);
+	setCookie('moreadjustments',moreadjustments,365);	
+}
+
+function clearAllCookies() {
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i];
+        var eqPos = cookie.indexOf("=");
+        var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
+}
+
+loadAllCookies();
+
+
+
+</script>
+</body>
+</html>
