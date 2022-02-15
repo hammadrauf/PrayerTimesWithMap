@@ -1,7 +1,7 @@
-#License
+# License
 	The Code in this project is based on original work done by Hamid Zarrabi-Zadeh. Some code may have been modified so do not use it as a direct replacement for the original PrayTimes.js. 
 	
-##Original Work License
+## Original Work License
 ```
 PrayTimes.js: Prayer Times Calculator (ver 2.3)
 Copyright (C) 2007-2011 PrayTimes.org
@@ -21,7 +21,7 @@ be useful, but WITHOUT ANY WARRANTY.
 PLEASE DO NOT REMOVE THIS COPYRIGHT BLOCK.
 ```	
 	
-##License Text - Detailed
+## License Text - Detailed
 ```
 GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
