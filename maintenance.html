@@ -24,12 +24,13 @@
 				.userguide { vertical-align:middle; max-width:400px; width:400px; text-align:justify; margin: 0 auto; }
 				#map{ vertical-align:middle; width:820px; height: 300px; }
         </style>
-	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDgkOzAIjiEf6SUsVC2d0RXIWInvkql9Is"></script>	
+	<script src="https://maps.googleapis.com/maps/api/js?key=GET_Your_API_KEY"></script>	
 <script>
 //Set up some of our variables.
 var map; //Will contain map object.
 var marker = false; ////Has the user plotted their location marker? 
 var myLatLng = { lat: 43.851267, lng: -79.015997 };
+const gc_api_key='GET_YOUR_API_KEY';
 if (navigator.geolocation) {
 	navigator.geolocation.getCurrentPosition(setMyLocation);
 }
@@ -133,7 +134,7 @@ function markerLocation(){
     //Add lat and lng values to a field that we can save.
     document.getElementById('latitude').value = currentLocation.lat(); //latitude
     document.getElementById('longitude').value = currentLocation.lng(); //longitude
-	var apicall = 'https://maps.googleapis.com/maps/api/timezone/json?location='+currentLocation.lat()+'%2C'+currentLocation.lng()+'&timestamp='+timestamp+'&key=AIzaSyDgkOzAIjiEf6SUsVC2d0RXIWInvkql9Is';
+	var apicall = 'https://maps.googleapis.com/maps/api/timezone/json?location='+currentLocation.lat()+'%2C'+currentLocation.lng()+'&timestamp='+timestamp+'&key='+gc_api_key;
 	
 	var xhr = new XMLHttpRequest() // create new XMLHttpRequest2 object
 	xhr.open('GET', apicall) // open GET request
@@ -147,7 +148,8 @@ function markerLocation(){
             //console.log("Destination date= "+ localdate.toLocaleString()) // Display current Click-point date and time
 			
 			document.getElementById('timezone').value = (output.rawOffset/3600);
-			document.getElementById("dst").selectedIndex = (output.dstOffset === 0 ? "1" : "2");			
+			//document.getElementById("dst").selectedIndex = (output.dstOffset === 0 ? "1" : "2");
+			document.getElementById("dst").selectedIndex = "0";
 			
 			update();
         }
@@ -249,6 +251,8 @@ google.maps.event.addDomListener(window, 'load', initMap);
 <li>You can manually click on the map to pick your location. You can also zoom-in, zoom-out or pan on the map.</li>
 <li>You can adjust the parameters for the PrayTimes.js and click on “Save Cookie” button to save your custom settings (other than the location) on your device. The next time you reload the page or revisit, the saved settings will be automatically used. The cookies are saved for 365 days. To clear the cookies on this page click “Clear Cookie” button.</li>
 </li>
+<li>Source Code: <a href="https://github.com/hammadrauf/PrayerTimesWithMap">Github-PrayerTimesWithMap</a></li>
+<li>Derived from Original Code at: <a href="http://www.praytimes.org">www.praytimes.org</a></li>
 </ol>
 </div>
 
@@ -870,9 +874,9 @@ var prayTimes = new PrayTimes();
 
         // make monthly timetable
         function makeTable(year, month, lat, lng, timeZone, dst) {
-                var items = {day: 'Day', fajr: 'Fajr', sunrise: 'Sunrise',
-                                        dhuhr: 'Dhuhr', asr: 'Asr', // sunset: 'Sunset',
-                                        maghrib: 'Maghrib', isha: 'Isha'};
+                var items = {day: 'Day', imsak:'Imsak', fajr: 'Fajr', sunrise: 'Sunrise',
+                                        dhuhr: 'Dhuhr', asr: 'Asr', sunset: 'Sunset',
+                                        maghrib: 'Maghrib', isha: 'Isha', midnight:'Midnight' };
 
                 var tbody = document.createElement('tbody');
                 tbody.appendChild(makeTableRow(items, items, 'head-row'));
