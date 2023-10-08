@@ -3,6 +3,7 @@ PrayTimes.js, by Mr. Hamid Zarrabi-Zadeh, is used to make a web page prayer time
 
 ## API Key
 Google cloud API Key can be created from Google Cloud Console, after enabling billing. The key included here was used in testing and has been deleted. If you plan to use this code then you will need your own API Key.
+Billing needs to be enabled by Google Cloud Console, but since 2020 or before my bill has always been 0.0 dollars for this API use. I guess it is free to use.
 
 ## Description
 If you need to check prayer times, then I have a page on this Github repository can help. It is also running at this link https://andromedabay.ddns.net/namaz.html. It is based on a Open Source JavaScript code published at PrayTimes.org. I would like to acknowledge the work done by the team at the original ParyTimes.Org (Mr. Hamid Zarrabi-Zadeh) website (http://www.praytimes.org), without whose work, my page would not have been possible.
