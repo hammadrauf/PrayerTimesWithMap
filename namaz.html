@@ -290,7 +290,7 @@ google.maps.event.addDomListener(window, 'load', initMap);
 
 	// make monthly timetable
 	function makeTable(year, month, lat, lng, timeZone, dst) {		
-		var items = {day: 'Day', imsak:'Imsak', fajr: 'Fajr', sunrise: 'Sunrise', 
+		var items = {date: 'Date', day: 'Day', imsak:'Imsak', fajr: 'Fajr', sunrise: 'Sunrise', 
 					dhuhr: 'Dhuhr', asr: 'Asr', sunset: 'Sunset', 
 					maghrib: 'Maghrib', isha: 'Isha', midnight: 'Midnight'};
 				
@@ -303,7 +303,8 @@ google.maps.event.addDomListener(window, 'load', initMap);
 
 		while (date < endDate) {
 			var times = prayTimes.getTimes(date, [lat, lng], timeZone, dst, format);
-			times.day = date.getDate();
+			times.day = getDayName(date.getDay());
+			times.date = date.getDate();
 			var today = new Date(); 
 			var isToday = (date.getMonth() == today.getMonth()) && (date.getDate() == today.getDate());
 			var klass = isToday ? 'today-row' : '';
@@ -320,7 +321,7 @@ google.maps.event.addDomListener(window, 'load', initMap);
 		for (var i in items) {
 			var cell = document.createElement('td');
 			cell.innerHTML = data[i];
-			cell.style.width = i=='day' ? '2.5em' : '3.7em';
+			cell.style.width = i=='date' ? '2.5em' : '3.7em';
 			row.appendChild(cell);
 		}
 		row.className = klass;
@@ -354,6 +355,11 @@ google.maps.event.addDomListener(window, 'load', initMap);
 		var monthName = new Array('January', 'February', 'March', 'April', 'May', 'June', 
 						'July', 'August', 'September', 'October', 'November', 'December');
 		return monthName[month];
+	}
+
+	function getDayName(day) {
+		var dayName = new Array('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
+		return dayName[day];
 	}
 
 	function $(id) {
