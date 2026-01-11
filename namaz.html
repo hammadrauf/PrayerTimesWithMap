@@ -303,7 +303,7 @@ google.maps.event.addDomListener(window, 'load', initMap);
 
 		while (date < endDate) {
 			var times = prayTimes.getTimes(date, [lat, lng], timeZone, dst, format);
-			times.day = getDayName(date.getDay());
+			times.day = getDayName(date.getDay())=="Fri" ? "<b><span style='color: green; background-color: yellow;'>Fri</span></b>" : getDayName(date.getDay());
 			times.date = date.getDate();
 			var today = new Date(); 
 			var isToday = (date.getMonth() == today.getMonth()) && (date.getDate() == today.getDate());
